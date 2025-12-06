@@ -4,11 +4,10 @@ A comprehensive Loon plugin to unlock premium features, remove ads, and enhance 
 
 ## ✨ Features
 
-* **👑 Unlock Platinum VIP**: Simulates "Platinum Member" status (`is_plus_user: true`) and sets the expiry date to the distant future.
+* **👑 Unlock Platinum VIP**: Simulates "LIHKG+" status and sets the expiry date to the distant future.
 * **🚫 Comprehensive Ad-Block**:
     * Removes in-app ad placeholders via script.
     * Blocks ad networks at the DNS/Network level (includes Google Ads, AppLovin, Taboola, etc.).
-* **🔓 Bypass Restrictions**: Removes "Newbie" (Level 5) status and forces user level to **Level 10**, bypassing posting restrictions.
 * **👁️ True Sight (Reveal Votes)**: Forces the display of **Like/Dislike** counts in thread lists and comment sections, even where they are hidden by the server.
 
 ## 🚀 Installation
