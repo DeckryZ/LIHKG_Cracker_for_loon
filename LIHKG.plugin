@@ -1,3 +1,22 @@
+[Rule]
+
+DOMAIN-SUFFIX, adv.lihkg.com, REJECT
+
+DOMAIN-SUFFIX, adsappier.com, REJECT
+DOMAIN-SUFFIX, appiersig.com, REJECT
+DOMAIN-SUFFIX, appier.net, REJECT
+DOMAIN-SUFFIX, chartboost.com, REJECT
+DOMAIN-SUFFIX, taboola.com, REJECT
+DOMAIN-SUFFIX, smaato.net, REJECT
+DOMAIN-SUFFIX, bidmyqps.xyz, REJECT
+DOMAIN-SUFFIX, adtrafficquality.google, REJECT
+DOMAIN-SUFFIX, inmobi.com, REJECT
+DOMAIN-SUFFIX, openx.net, REJECT
+DOMAIN-SUFFIX, applvn.com, REJECT
+DOMAIN-SUFFIX, applovin.com, REJECT
+DOMAIN-SUFFIX, tpc.googlesyndication.com, REJECT
+DOMAIN-SUFFIX, adservice.google.com, REJECT
+DOMAIN-SUFFIX, g.doubleclick.net, REJECT
 
 [Script]
 http-response ^https?:\/\/(server\.|)lihkg\.com\/api_v2\/.* script-path=https://raw.githubusercontent.com/DeckryZ/lihkg_crack_for_loon/refs/heads/main/lihkg.js, requires-body=true, tag=LIHKG_VIP
