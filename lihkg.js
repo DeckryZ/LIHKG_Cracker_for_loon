@@ -1,40 +1,26 @@
 
-
 var body = JSON.parse($response.body);
+var res = body.response; 
 
+if (res) {
 
-var enableVote = true; 
-
-
-if (typeof $argument !== "undefined" && $argument === "false") {
-    enableVote = false;
-}
-
-if (body.response && body.response.me) {
-    body.response.me.is_plus_user = true;
-    body.response.me.plus_expiry_time = new Date(9876, 4, 4, 3, 21, 0).getTime() / 1000;
-}
-
-
-if (enableVote) {
-    if (body.response && body.response.items) {
-        body.response.items.forEach(function(item) {
-            item.display_vote = true;
-        });
+    if (res.me) {
+        res.me.is_plus_user = true;
+        res.me.plus_expiry_time = new Date(9876, 4, 4, 3, 21, 0).getTime() / 1000;
     }
 
-    if (body.response && body.response.item_data) {
-        if (Array.isArray(body.response.item_data)) {
-            body.response.item_data.forEach(function(item) {
-                item.display_vote = true;
-            });
-        } else {
-            body.response.item_data.display_vote = true;
-        }
-    }
 
-    if (body.response && typeof body.response.display_vote !== "undefined") {
-        body.response.display_vote = true;
+    var openVote = function(item) { item.display_vote = true; };
+
+    [res.items, res.item_data].forEach(function(list) {
+        if (Array.isArray(list)) list.forEach(openVote);
+    });
+
+    if (res.item_data && !Array.isArray(res.item_data)) {
+        openVote(res.item_data);
+    }
+    if (typeof res.display_vote !== "undefined") {
+        openVote(res);
     }
 }
 
