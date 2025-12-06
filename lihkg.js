@@ -20,9 +20,9 @@ if (body.response && body.response.me) {
         body.response.me.meta_data.login_count = 365;
     }
 
-    // (可选) 去除新手限制
-    // body.response.me.is_newbie = false;
-    // body.response.me.level = 10;
+
+    body.response.me.is_newbie = false;
+    body.response.me.level = 10;
 }
 
 // ---------------------------------------
