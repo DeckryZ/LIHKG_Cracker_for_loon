@@ -1,15 +1,12 @@
-#!name = LIHKG CRACKER
-#!desc = Unlocks LIHKG+ & Block all kinds of ad
+#!name = LIHKG Plus
+#!desc = Unlocks LIHKG+ and removes ads. Includes a toggle to force reveal hidden vote counts.
 #!icon = https://raw.githubusercontent.com/DeckryZ/LIHKG_crack_for_loon/main/icon.png
-
 
 [Argument]
 ShowVotes = switch, true, tag=Force Show Votes, desc=If enabled, hidden Like/Dislike counts will be forcibly displayed in lists and comment sections.
 
 [Rule]
-
 DOMAIN-SUFFIX, adv.lihkg.com, REJECT
-
 DOMAIN-SUFFIX, adsappier.com, REJECT
 DOMAIN-SUFFIX, appiersig.com, REJECT
 DOMAIN-SUFFIX, appier.net, REJECT
@@ -27,8 +24,7 @@ DOMAIN-SUFFIX, adservice.google.com, REJECT
 DOMAIN-SUFFIX, g.doubleclick.net, REJECT
 
 [Script]
-# 核心脚本：注入 ShowVotes 参数
-http-response ^https?:\/\/(server\.|)lihkg\.com\/api_v2\/.* script-path=https://raw.githubusercontent.com/DeckryZ/lihkg_crack_for_loon/main/lihkg.js, requires-body=true, argument=show_votes={ShowVotes}, tag=LIHKG_VIP
+http-response ^https?:\/\/(server\.|)lihkg\.com\/api_v2\/.* script-path=https://raw.githubusercontent.com/DeckryZ/lihkg_crack_for_loon/main/lihkg.js, requires-body=true, argument={ShowVotes}, tag=LIHKG_VIP
 
 [MitM]
 hostname = *.lihkg.com, lihkg.com
