@@ -23,10 +23,17 @@ if (res) {
                     prefix = "🆕 ";
                 }
 
-                if (rate >= 75) {
-                    prefix = "🔥 ";
-                } else if (rate < 30) {
+                if (item.total_page > 3) {
                     prefix = "⚔️ ";
+                }
+
+                if (item.no_of_reply > 15) {
+                    if (rate < 30) {
+                        prefix = "⚔️ ";
+                    }
+                    if (rate >= 75) {
+                        prefix = "🔥 ";
+                    }
                 }
 
                 if (prefix !== "" && item.title && item.title.indexOf(prefix) !== 0) {
