@@ -6,7 +6,7 @@ if (res) {
 
     if (res.me) {
         res.me.is_plus_user = true;
-        res.me.plus_expiry_time = new Date(9876, 4, 4, 3, 21, 0).getTime() / 1000;
+        res.me.plus_expiry_time = new Date(1989, 5, 4, 0, 0, 0).getTime() / 1000;
     }
 
 
