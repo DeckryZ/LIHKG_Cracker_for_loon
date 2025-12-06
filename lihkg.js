@@ -16,6 +16,22 @@ if (res) {
             
             if (total > 0) {
                 rate = Math.floor(Math.abs(item.like_count - item.dislike_count) / total * 100);
+
+                var prefix = "";
+
+                if (/[：｜「」]/.test(item.title)) {
+                    prefix = "🆕 ";
+                }
+
+                if (rate >= 75) {
+                    prefix = "🔥 ";
+                } else if (rate < 30) {
+                    prefix = "⚔️ ";
+                }
+
+                if (prefix !== "" && item.title && item.title.indexOf(prefix) !== 0) {
+                    item.title = prefix + item.title;
+                }
             }
             
             item.category.name = rate + "% ";
