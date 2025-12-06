@@ -26,4 +26,4 @@ If the button above doesn't work, you can copy the link below and add it to Loon
 2. Tap **...** -> **+** -> **URL**.
 3. Paste:
    ```url
-   [https://raw.githubusercontent.com/DeckryZ/lihkg_crack_for_loon/refs/heads/main/LIHKG.plugin]
+   https://raw.githubusercontent.com/DeckryZ/lihkg_crack_for_loon/refs/heads/main/LIHKG.plugin
