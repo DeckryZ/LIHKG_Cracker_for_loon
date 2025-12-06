@@ -17,7 +17,7 @@ A comprehensive Loon plugin to unlock premium features, remove ads, and enhance 
 
 Tap the button below to automatically launch Loon and import this plugin:
 
-[![Loon Install](https://img.shields.io/badge/Loon-Install_Plugin-blue?style=for-the-badge&logo=apple)](loon://import?plugin=https://raw.githubusercontent.com/DeckryZ/lihkg_crack_for_loon/refs/heads/main/LIHKG.plugin)
+[![Loon Install](https://img.shields.io/badge/Loon-Install_Plugin-blue?style=for-the-badge&logo=apple)](https://www.nsloon.com/openloon/import?plugin=https://raw.githubusercontent.com/DeckryZ/lihkg_crack_for_loon/refs/heads/main/LIHKG.plugin)
 
 ### Manual Import
 
