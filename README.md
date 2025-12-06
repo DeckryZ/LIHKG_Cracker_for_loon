@@ -4,11 +4,12 @@ A comprehensive Loon plugin to unlock premium features, remove ads, and enhance 
 
 ## ✨ Features
 
-* **👑 Unlock Platinum VIP**: Simulates "LIHKG+" status and sets the expiry date to the distant future.
+* **👑 Unlock Platinum VIP**: Simulates "LIHKG+" member status.
 * **🚫 Comprehensive Ad-Block**:
     * Removes in-app ad placeholders via script.
     * Blocks ad networks at the DNS/Network level (includes Google Ads, AppLovin, Taboola, etc.).
-* **👁️ True Sight (Reveal Votes)**: Forces the display of **Like/Dislike** counts in thread lists and comment sections, even where they are hidden by the server.
+* **👁️ True Sight (Vote Reveal)**: Forces the display of **Like/Dislike** counts in thread lists and comment sections, even where they are hidden by the server.
+* **📊 Satisfaction Rate Visualization**: Automatically replaces the generic category name (e.g., "Current Affairs") with the **Satisfaction Rate** (e.g., "**95% **") calculated based on real-time upvotes and downvotes.
 
 ## 🚀 Installation
 
@@ -22,8 +23,8 @@ Tap the button below to automatically launch Loon and import this plugin:
 
 If the button above doesn't work, you can copy the link below and add it to Loon manually:
 
-1. Open **Loon** -> **Profile** -> **Plugin**.
-2. Tap **...** -> **+** -> **URL**.
+1. Open **Loon** -> **Config** -> **Plugins**.
+2. Tap **+** -> **URL**.
 3. Paste:
    ```url
-   https://raw.githubusercontent.com/DeckryZ/lihkg_crack_for_loon/refs/heads/main/LIHKG.plugin
+ https://raw.githubusercontent.com/DeckryZ/lihkg_crack_for_loon/refs/heads/main/LIHKG.plugin
