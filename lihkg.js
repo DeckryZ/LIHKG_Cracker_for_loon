@@ -27,13 +27,12 @@ if (res) {
                     prefix = "⚔️ ";
                 }
 
-                if (item.no_of_reply > 15) {
-                    if (rate < 30) {
-                        prefix = "⚔️ ";
-                    }
-                    if (rate >= 75) {
-                        prefix = "🔥 ";
-                    }
+                if (item.no_of_reply > 15 && rate < 30) {
+                    prefix = "⚔️ ";
+                }
+
+                if ((item.no_of_reply > 40 && rate >= 70) || (item.no_of_reply > 15 && rate >= 85)) {
+                    prefix = "🔥 ";
                 }
 
                 if (prefix !== "" && item.title && item.title.indexOf(prefix) !== 0) {
