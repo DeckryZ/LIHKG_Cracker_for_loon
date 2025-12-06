@@ -1,26 +1,41 @@
-
 var body = JSON.parse($response.body);
-var res = body.response; 
+var res = body.response;
 
 if (res) {
-
     if (res.me) {
         res.me.is_plus_user = true;
         res.me.plus_expiry_time = new Date(9876, 4, 4, 3, 21, 0).getTime() / 1000;
     }
 
+    var optimizePost = function(item) {
+        item.display_vote = true;
 
-    var openVote = function(item) { item.display_vote = true; };
+        if (item.category && typeof item.like_count !== "undefined" && typeof item.dislike_count !== "undefined") {
+            var total = item.like_count + item.dislike_count;
+            var rate = 0;
+            
+            if (total > 0) {
+                rate = Math.floor((item.like_count / total) * 100);
+            }
+            
+            item.category.name = rate + "%";
+        }
+    };
 
-    [res.items, res.item_data].forEach(function(list) {
-        if (Array.isArray(list)) list.forEach(openVote);
-    });
-
-    if (res.item_data && !Array.isArray(res.item_data)) {
-        openVote(res.item_data);
+    if (res.items) {
+        res.items.forEach(optimizePost);
     }
-    if (typeof res.display_vote !== "undefined") {
-        openVote(res);
+
+    if (res.category && typeof res.like_count !== "undefined") {
+        optimizePost(res);
+    }
+    
+    if (res.item_data) {
+        if (Array.isArray(res.item_data)) {
+            res.item_data.forEach(function(c) { c.display_vote = true; });
+        } else {
+            res.item_data.display_vote = true;
+        }
     }
 }
 
