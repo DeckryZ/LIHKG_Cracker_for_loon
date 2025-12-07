@@ -66,15 +66,45 @@ if (res) {
                         var replies = replyMap[item.post_id];
                         if (replies && replies.length > 0) {
                             replies.sort(function(a, b) {
-                                var scoreA = a.like_count - a.dislike_count;
-                                var scoreB = b.like_count - b.dislike_count;
-                                return scoreB - scoreA; 
+                                var rateA = 0, rateB = 0;
+                                var totalA = a.like_count + a.dislike_count;
+                                var totalB = b.like_count + b.dislike_count;
+                                
+                                if (totalA > 0) rateA = Math.abs(a.like_count - a.dislike_count) / totalA;
+                                if (totalB > 0) rateB = Math.abs(b.like_count - b.dislike_count) / totalB;
+                                
+                                return rateB - rateA; 
                             });
 
-                            var bestReply = replies[0];
+                            var bestReply = null;
+                            var candidate1 = replies[0];
+                            var total1 = candidate1.like_count + candidate1.dislike_count;
+                            
+                            if (total1 > 4) {
+                                bestReply = candidate1;
+                            } else if (replies.length > 1) {
+                                var candidate2 = replies[1];
+                                var total2 = candidate2.like_count + candidate2.dislike_count;
+                                if (total2 > 4) {
+                                    bestReply = candidate2;
+                                }
+                            }
+
+                            if (!bestReply) {
+                                var maxTotal = -1;
+                                for (var k = 0; k < replies.length; k++) {
+                                    var r = replies[k];
+                                    var t = r.like_count + r.dislike_count;
+                                    if (t > maxTotal) {
+                                        maxTotal = t;
+                                        bestReply = r;
+                                    }
+                                }
+                            }
 
                             if (bestReply) {
-                                item.msg += "<br><br><blockquote><small><strong>" + bestReply.user_nickname + ":</strong><br>" + bestReply.msg + "</small></blockquote>";
+                                // 去掉了投票数显示，只保留名字和内容
+                                item.msg += "<br><br><blockquote><strong>" + bestReply.user_nickname + ":</strong><br>" + bestReply.msg + "</blockquote>";
                             }
                         }
                         return true;
