@@ -63,41 +63,38 @@ if (res) {
                 res.item_data = res.item_data.filter(function(item) {
                     var isLevel1 = !item.quote_post_id;
                     var isStoryReply = !!contentPostIds[item.quote_post_id];
-                    
-                    // 判断当前楼层本身是否是“帖子正文” (Story Post)
                     var isContentPost = !!contentPostIds[item.post_id];
 
                     if (isLevel1 || isStoryReply) {
-                        // 修正1：如果是帖子正文内容，直接显示，不拼接任何回复
+                        // 1. 帖子正文内容不显示回复
                         if (isContentPost) {
                             return true;
                         }
 
                         var replies = replyMap[item.post_id];
                         if (replies && replies.length > 0) {
-                            var bestReply = null;
+                            
+                            // 2. 统一排序逻辑（无论一条还是多条，都走这套严格流程）
+                            // 使用 parseInt 强制转数字，防止数据格式问题导致不显示
+                            replies.sort(function(a, b) {
+                                var likeA = parseInt(a.like_count) || 0;
+                                var disA = parseInt(a.dislike_count) || 0;
+                                var likeB = parseInt(b.like_count) || 0;
+                                var disB = parseInt(b.dislike_count) || 0;
 
-                            if (replies.length === 1) {
-                                bestReply = replies[0];
-                            } else {
-                                // 修正2：强化数值类型转换，确保绝对值排序正确
-                                replies.sort(function(a, b) {
-                                    var likeA = parseInt(a.like_count) || 0;
-                                    var disA = parseInt(a.dislike_count) || 0;
-                                    var likeB = parseInt(b.like_count) || 0;
-                                    var disB = parseInt(b.dislike_count) || 0;
+                                var scoreA = Math.abs(likeA - disA);
+                                var scoreB = Math.abs(likeB - disB);
 
-                                    var scoreA = Math.abs(likeA - disA);
-                                    var scoreB = Math.abs(likeB - disB);
+                                // 优先选绝对值大的（热度高）
+                                if (scoreA !== scoreB) {
+                                    return scoreB - scoreA; 
+                                }
+                                // 绝对值一样，选赞+踩总数多的
+                                return (likeB + disB) - (likeA + disA);
+                            });
 
-                                    if (scoreA !== scoreB) {
-                                        return scoreB - scoreA; // 绝对值大的排前面
-                                    }
-                                    // 如果绝对值一样，总票数多的排前面
-                                    return (likeB + disB) - (likeA + disA);
-                                });
-                                bestReply = replies[0];
-                            }
+                            // 取第一名
+                            var bestReply = replies[0];
 
                             if (bestReply) {
                                 item.msg += "<br><br><blockquote><strong><span class=\"small\">" + bestReply.user_nickname + "</span>:</strong><br>" + bestReply.msg + "</blockquote>";
