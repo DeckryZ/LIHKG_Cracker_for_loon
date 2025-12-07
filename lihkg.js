@@ -1,128 +1,94 @@
 var body = JSON.parse($response.body);
 var res = body.response;
-var isThreadPage = $request.url.indexOf("/page/") !== -1 && $request.url.indexOf("quotes") === -1;
 
 if (res) {
+    // ===================================
+    // 1. 全局功能：VIP + 9876年彩蛋
+    // ===================================
     if (res.me) {
         res.me.is_plus_user = true;
         res.me.plus_expiry_time = new Date(9876, 4, 4, 3, 21, 0).getTime() / 1000;
     }
 
+    // ===================================
+    // 2. 场景 A：帖子列表模式 (items 存在)
+    //    功能：计算满意率、添加 🔥⚔️🆕 Emoji
+    // ===================================
     if (res.items) {
         res.items.forEach(function(item) {
             item.display_vote = true;
+
             if (item.category && typeof item.like_count !== "undefined" && typeof item.dislike_count !== "undefined") {
                 var total = item.like_count + item.dislike_count;
                 var rate = 0;
+                
                 if (total > 0) {
                     rate = Math.floor(Math.abs(item.like_count - item.dislike_count) / total * 100);
+
                     var prefix = "";
-                    if (item.is_hot) { prefix = "🔥 "; }
-                    if (/[：｜「」]/.test(item.title)) { prefix = "🆕 "; }
-                    if (item.total_page > 3) { prefix = "⚔️ "; }
-                    if (item.no_of_reply > 15 && rate < 30) { prefix = "⚔️ "; }
+
+                    // Emoji 优先级：⚔️ > 🆕 > 🔥
+                    
+                    // 1. 热门 (is_hot)
+                    if (item.is_hot) {
+                        prefix = "🔥 ";
+                    }
+
+                    // 2. 新闻 (标题含标点)
+                    if (/[：｜「」]/.test(item.title)) {
+                        prefix = "🆕 ";
+                    }
+
+                    // 3. 争议/长贴 (最高优先级)
+                    if (item.total_page > 3) {
+                        prefix = "⚔️ ";
+                    }
+                    if (item.no_of_reply > 15 && rate < 30) {
+                        prefix = "⚔️ ";
+                    }
+
+                    // 应用标题前缀
                     if (prefix !== "" && item.title && item.title.indexOf(prefix) !== 0) {
                         item.title = prefix + item.title;
                     }
                 }
+                
+                // 修改台名为满意率
                 item.category.name = rate + "% ";
             }
         });
     }
 
+    // ===================================
+    // 3. 场景 B：帖子详情模式 (item_data 存在)
+    //    功能：只显示“一级回复” (直接回楼主的)，过滤掉所有楼中楼
+    // ===================================
     if (res.item_data) {
+        // 如果是数组 (即帖子评论页)
         if (Array.isArray(res.item_data)) {
-            if (isThreadPage) {
-                var threadOwnerId = res.user ? res.user.user_id : -1;
-                var contentPostIds = []; 
-                var replyMap = {}; 
+            // 🔥 核心过滤逻辑 🔥
+            // 只保留 quote_post_id 为空 (直接回复) 的评论
+            // 或者是帖子正文本身 (msg_num: 1)
+            res.item_data = res.item_data.filter(function(item) {
+                // 如果 quote_post_id 是空字符串 ""，说明是直接回复楼主
+                // 如果是 undefined 或 null，通常是第一楼正文
+                return !item.quote_post_id;
+            });
 
-                if (res.page === "1" || res.page === 1) {
-                    for (var i = 0; i < res.item_data.length; i++) {
-                        var item = res.item_data[i];
-                        if (item.user.user_id === threadOwnerId) {
-                            contentPostIds.push(item.post_id);
-                        } else {
-                            break; 
-                        }
-                    }
-                }
-
-                for (var i = 0; i < res.item_data.length; i++) {
-                    var item = res.item_data[i];
-                    if (item.quote_post_id) {
-                        if (!replyMap[item.quote_post_id]) {
-                            replyMap[item.quote_post_id] = [];
-                        }
-                        replyMap[item.quote_post_id].push(item);
-                    }
-                }
-
-                res.item_data = res.item_data.filter(function(item) {
-                    var isLevel1 = !item.quote_post_id;
-                    var isStoryReply = contentPostIds.indexOf(item.quote_post_id) !== -1;
-                    
-                    if (isLevel1 || isStoryReply) {
-                        var replies = replyMap[item.post_id];
-                        if (replies && replies.length > 0) {
-                            replies.sort(function(a, b) {
-                                var rateA = 0, rateB = 0;
-                                var totalA = a.like_count + a.dislike_count;
-                                var totalB = b.like_count + b.dislike_count;
-                                
-                                if (totalA > 0) rateA = Math.abs(a.like_count - a.dislike_count) / totalA;
-                                if (totalB > 0) rateB = Math.abs(b.like_count - b.dislike_count) / totalB;
-                                
-                                return rateB - rateA; 
-                            });
-
-                            var bestReply = null;
-                            var candidate1 = replies[0];
-                            var total1 = candidate1.like_count + candidate1.dislike_count;
-                            
-                            if (total1 > 4) {
-                                bestReply = candidate1;
-                            } else if (replies.length > 1) {
-                                var candidate2 = replies[1];
-                                var total2 = candidate2.like_count + candidate2.dislike_count;
-                                if (total2 > 4) {
-                                    bestReply = candidate2;
-                                }
-                            }
-
-                            if (!bestReply) {
-                                var maxTotal = -1;
-                                for (var k = 0; k < replies.length; k++) {
-                                    var r = replies[k];
-                                    var t = r.like_count + r.dislike_count;
-                                    if (t > maxTotal) {
-                                        maxTotal = t;
-                                        bestReply = r;
-                                    }
-                                }
-                            }
-
-                            if (bestReply) {
-                                // 去掉了投票数显示，只保留名字和内容
-                                item.msg += "<br><br><blockquote><strong>" + bestReply.user_nickname + ":</strong><br>" + bestReply.msg + "</blockquote>";
-                            }
-                        }
-                        return true;
-                    }
-                    return false;
-                });
-            }
-
+            // 强制显赞
             res.item_data.forEach(function(item) {
                 item.display_vote = true;
             });
-
-        } else {
+        } 
+        // 如果是对象 (极少数情况)
+        else {
             res.item_data.display_vote = true;
         }
-
+        
+        // 处理顶部的分类信息 (如果有)
         if (res.category && typeof res.like_count !== "undefined") {
              res.display_vote = true;
+             // 详情页标题也可以顺便算一下满意率
              var dTotal = res.like_count + res.dislike_count;
              if (dTotal > 0) {
                  var dRate = Math.floor(Math.abs(res.like_count - res.dislike_count) / dTotal * 100);
