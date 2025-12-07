@@ -2,7 +2,6 @@ var body = JSON.parse($response.body);
 var res = body.response;
 var isThreadPage = $request.url.indexOf("/page/") !== -1 && $request.url.indexOf("quotes") === -1;
 
-// 优化1：正则表达式提取到循环外，避免重复创建
 var newsRegex = /[：｜「」]/;
 
 if (res) {
@@ -21,7 +20,6 @@ if (res) {
                     rate = Math.floor(Math.abs(item.like_count - item.dislike_count) / total * 100);
                     var prefix = "";
                     if (item.is_hot) { prefix = "🔥 "; }
-                    // 使用提取出的正则对象
                     if (newsRegex.test(item.title)) { prefix = "🆕 "; }
                     if (item.total_page > 3) { prefix = "⚔️ "; }
                     if (item.no_of_reply > 15 && rate < 30) { prefix = "⚔️ "; }
@@ -38,15 +36,15 @@ if (res) {
         if (Array.isArray(res.item_data)) {
             if (isThreadPage) {
                 var threadOwnerId = res.user ? res.user.user_id : -1;
-                // 优化2：使用对象 (Hash Map) 代替数组，查询速度提升至 O(1)
+                // 用对象存储正文ID，查询更快
                 var contentPostIds = {}; 
                 var replyMap = {}; 
 
+                // 1. 识别楼主连载层 (Story Mode)
                 if (res.page === "1" || res.page === 1) {
                     for (var i = 0; i < res.item_data.length; i++) {
                         var item = res.item_data[i];
                         if (item.user.user_id === threadOwnerId) {
-                            // 存入 Key-Value 结构
                             contentPostIds[item.post_id] = true;
                         } else {
                             break; 
@@ -54,7 +52,7 @@ if (res) {
                     }
                 }
 
-                // 构建回复关系图
+                // 2. 构建回复地图 (在过滤前，把所有回复关系记下来)
                 for (var i = 0; i < res.item_data.length; i++) {
                     var item = res.item_data[i];
                     if (item.quote_post_id) {
@@ -65,17 +63,19 @@ if (res) {
                     }
                 }
 
+                // 3. 核心过滤 + 嫁接逻辑
                 res.item_data = res.item_data.filter(function(item) {
+                    // 判断是否是一级评论（或楼主正文）
                     var isLevel1 = !item.quote_post_id;
-                    // 使用 Hash 查询，无需 indexOf 遍历
                     var isStoryReply = !!contentPostIds[item.quote_post_id];
                     
+                    // 如果是要保留的一级评论
                     if (isLevel1 || isStoryReply) {
+                        // 去地图里找它的儿子（二级评论）
                         var replies = replyMap[item.post_id];
                         if (replies && replies.length > 0) {
                             
-                            // 优化3：移除 Sort 排序，改用单次遍历寻找最大值 (O(N))
-                            // 寻找绝对值净分最高的评论
+                            // 寻找绝对值净分最高的评论 (赞踩之差的绝对值)
                             var bestReply = null;
                             var maxScore = -1;
 
@@ -89,12 +89,16 @@ if (res) {
                                 }
                             }
 
+                            // 嫁接：把最好的那条二级评论接在屁股后面
                             if (bestReply) {
                                 item.msg += "<br><br><blockquote><small><strong>" + bestReply.user_nickname + ":</strong><br>" + bestReply.msg + "</small></blockquote>";
                             }
                         }
+                        // 保留这条一级评论
                         return true;
                     }
+                    
+                    // 其他普通的二级评论，直接过滤掉，不显示在列表中
                     return false;
                 });
             }
