@@ -2,8 +2,6 @@ var body = JSON.parse($response.body);
 var res = body.response;
 var isThreadPage = $request.url.indexOf("/page/") !== -1 && $request.url.indexOf("quotes") === -1;
 
-var newsRegex = /[：｜「」]/;
-
 if (res) {
     if (res.me) {
         res.me.is_plus_user = true;
@@ -20,7 +18,7 @@ if (res) {
                     rate = Math.floor(Math.abs(item.like_count - item.dislike_count) / total * 100);
                     var prefix = "";
                     if (item.is_hot) { prefix = "🔥 "; }
-                    if (newsRegex.test(item.title)) { prefix = "🆕 "; }
+                    if (/[：｜「」]/.test(item.title)) { prefix = "🆕 "; }
                     if (item.total_page > 3) { prefix = "⚔️ "; }
                     if (item.no_of_reply > 15 && rate < 30) { prefix = "⚔️ "; }
                     if (prefix !== "" && item.title && item.title.indexOf(prefix) !== 0) {
@@ -36,23 +34,20 @@ if (res) {
         if (Array.isArray(res.item_data)) {
             if (isThreadPage) {
                 var threadOwnerId = res.user ? res.user.user_id : -1;
-                // 用对象存储正文ID，查询更快
-                var contentPostIds = {}; 
+                var contentPostIds = []; 
                 var replyMap = {}; 
 
-                // 1. 识别楼主连载层 (Story Mode)
                 if (res.page === "1" || res.page === 1) {
                     for (var i = 0; i < res.item_data.length; i++) {
                         var item = res.item_data[i];
                         if (item.user.user_id === threadOwnerId) {
-                            contentPostIds[item.post_id] = true;
+                            contentPostIds.push(item.post_id);
                         } else {
                             break; 
                         }
                     }
                 }
 
-                // 2. 构建回复地图 (在过滤前，把所有回复关系记下来)
                 for (var i = 0; i < res.item_data.length; i++) {
                     var item = res.item_data[i];
                     if (item.quote_post_id) {
@@ -63,42 +58,57 @@ if (res) {
                     }
                 }
 
-                // 3. 核心过滤 + 嫁接逻辑
                 res.item_data = res.item_data.filter(function(item) {
-                    // 判断是否是一级评论（或楼主正文）
                     var isLevel1 = !item.quote_post_id;
-                    var isStoryReply = !!contentPostIds[item.quote_post_id];
+                    var isStoryReply = contentPostIds.indexOf(item.quote_post_id) !== -1;
                     
-                    // 如果是要保留的一级评论
                     if (isLevel1 || isStoryReply) {
-                        // 去地图里找它的儿子（二级评论）
                         var replies = replyMap[item.post_id];
                         if (replies && replies.length > 0) {
-                            
-                            // 寻找绝对值净分最高的评论 (赞踩之差的绝对值)
-                            var bestReply = null;
-                            var maxScore = -1;
-
-                            for (var j = 0; j < replies.length; j++) {
-                                var r = replies[j];
-                                var currentScore = Math.abs(r.like_count - r.dislike_count);
+                            replies.sort(function(a, b) {
+                                var rateA = 0, rateB = 0;
+                                var totalA = a.like_count + a.dislike_count;
+                                var totalB = b.like_count + b.dislike_count;
                                 
-                                if (currentScore > maxScore) {
-                                    maxScore = currentScore;
-                                    bestReply = r;
+                                if (totalA > 0) rateA = Math.abs(a.like_count - a.dislike_count) / totalA;
+                                if (totalB > 0) rateB = Math.abs(b.like_count - b.dislike_count) / totalB;
+                                
+                                return rateB - rateA; 
+                            });
+
+                            var bestReply = null;
+                            var candidate1 = replies[0];
+                            var total1 = candidate1.like_count + candidate1.dislike_count;
+                            
+                            if (total1 > 4) {
+                                bestReply = candidate1;
+                            } else if (replies.length > 1) {
+                                var candidate2 = replies[1];
+                                var total2 = candidate2.like_count + candidate2.dislike_count;
+                                if (total2 > 4) {
+                                    bestReply = candidate2;
                                 }
                             }
 
-                            // 嫁接：把最好的那条二级评论接在屁股后面
+                            if (!bestReply) {
+                                var maxTotal = -1;
+                                for (var k = 0; k < replies.length; k++) {
+                                    var r = replies[k];
+                                    var t = r.like_count + r.dislike_count;
+                                    if (t > maxTotal) {
+                                        maxTotal = t;
+                                        bestReply = r;
+                                    }
+                                }
+                            }
+
                             if (bestReply) {
-                                item.msg += "<br><br><blockquote><small><strong>" + bestReply.user_nickname + ":</strong><br>" + bestReply.msg + "</small></blockquote>";
+                                // 去掉了投票数显示，只保留名字和内容
+                                item.msg += "<br><br><blockquote><strong><span class=\"small\">" + bestReply.user_nickname + "</span>:</strong><br>" + bestReply.msg + "</blockquote>";
                             }
                         }
-                        // 保留这条一级评论
                         return true;
                     }
-                    
-                    // 其他普通的二级评论，直接过滤掉，不显示在列表中
                     return false;
                 });
             }
