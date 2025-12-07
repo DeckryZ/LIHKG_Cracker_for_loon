@@ -103,8 +103,7 @@ if (res) {
                             }
 
                             if (bestReply) {
-                                // 去掉了投票数显示，只保留名字和内容
-                                item.msg += "<br><br><blockquote><strong>" + bestReply.user_nickname + ":</strong><br>" + bestReply.msg + "</blockquote>";
+                                item.msg += "<br><br><blockquote><small><strong>" + bestReply.user_nickname + ":</strong><br>" + bestReply.msg + "</small></blockquote>";
                             }
                         }
                         return true;
