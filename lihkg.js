@@ -2,6 +2,9 @@ var body = JSON.parse($response.body);
 var res = body.response;
 var isThreadPage = $request.url.indexOf("/page/") !== -1 && $request.url.indexOf("quotes") === -1;
 
+// 优化1：正则表达式提取到循环外，避免重复创建
+var newsRegex = /[：｜「」]/;
+
 if (res) {
     if (res.me) {
         res.me.is_plus_user = true;
@@ -18,7 +21,8 @@ if (res) {
                     rate = Math.floor(Math.abs(item.like_count - item.dislike_count) / total * 100);
                     var prefix = "";
                     if (item.is_hot) { prefix = "🔥 "; }
-                    if (/[：｜「」]/.test(item.title)) { prefix = "🆕 "; }
+                    // 使用提取出的正则对象
+                    if (newsRegex.test(item.title)) { prefix = "🆕 "; }
                     if (item.total_page > 3) { prefix = "⚔️ "; }
                     if (item.no_of_reply > 15 && rate < 30) { prefix = "⚔️ "; }
                     if (prefix !== "" && item.title && item.title.indexOf(prefix) !== 0) {
@@ -34,20 +38,23 @@ if (res) {
         if (Array.isArray(res.item_data)) {
             if (isThreadPage) {
                 var threadOwnerId = res.user ? res.user.user_id : -1;
-                var contentPostIds = []; 
+                // 优化2：使用对象 (Hash Map) 代替数组，查询速度提升至 O(1)
+                var contentPostIds = {}; 
                 var replyMap = {}; 
 
                 if (res.page === "1" || res.page === 1) {
                     for (var i = 0; i < res.item_data.length; i++) {
                         var item = res.item_data[i];
                         if (item.user.user_id === threadOwnerId) {
-                            contentPostIds.push(item.post_id);
+                            // 存入 Key-Value 结构
+                            contentPostIds[item.post_id] = true;
                         } else {
                             break; 
                         }
                     }
                 }
 
+                // 构建回复关系图
                 for (var i = 0; i < res.item_data.length; i++) {
                     var item = res.item_data[i];
                     if (item.quote_post_id) {
@@ -60,51 +67,30 @@ if (res) {
 
                 res.item_data = res.item_data.filter(function(item) {
                     var isLevel1 = !item.quote_post_id;
-                    var isStoryReply = contentPostIds.indexOf(item.quote_post_id) !== -1;
+                    // 使用 Hash 查询，无需 indexOf 遍历
+                    var isStoryReply = !!contentPostIds[item.quote_post_id];
                     
                     if (isLevel1 || isStoryReply) {
                         var replies = replyMap[item.post_id];
                         if (replies && replies.length > 0) {
-                            replies.sort(function(a, b) {
-                                var rateA = 0, rateB = 0;
-                                var totalA = a.like_count + a.dislike_count;
-                                var totalB = b.like_count + b.dislike_count;
-                                
-                                if (totalA > 0) rateA = Math.abs(a.like_count - a.dislike_count) / totalA;
-                                if (totalB > 0) rateB = Math.abs(b.like_count - b.dislike_count) / totalB;
-                                
-                                return rateB - rateA; 
-                            });
-
-                            var bestReply = null;
-                            var candidate1 = replies[0];
-                            var total1 = candidate1.like_count + candidate1.dislike_count;
                             
-                            if (total1 > 4) {
-                                bestReply = candidate1;
-                            } else if (replies.length > 1) {
-                                var candidate2 = replies[1];
-                                var total2 = candidate2.like_count + candidate2.dislike_count;
-                                if (total2 > 4) {
-                                    bestReply = candidate2;
-                                }
-                            }
+                            // 优化3：移除 Sort 排序，改用单次遍历寻找最大值 (O(N))
+                            // 寻找绝对值净分最高的评论
+                            var bestReply = null;
+                            var maxScore = -1;
 
-                            if (!bestReply) {
-                                var maxTotal = -1;
-                                for (var k = 0; k < replies.length; k++) {
-                                    var r = replies[k];
-                                    var t = r.like_count + r.dislike_count;
-                                    if (t > maxTotal) {
-                                        maxTotal = t;
-                                        bestReply = r;
-                                    }
+                            for (var j = 0; j < replies.length; j++) {
+                                var r = replies[j];
+                                var currentScore = Math.abs(r.like_count - r.dislike_count);
+                                
+                                if (currentScore > maxScore) {
+                                    maxScore = currentScore;
+                                    bestReply = r;
                                 }
                             }
 
                             if (bestReply) {
-                                // 去掉了投票数显示，只保留名字和内容
-                                item.msg += "<br><br><blockquote><strong>" + bestReply.user_nickname + ":</strong><br>" + bestReply.msg + "</blockquote>";
+                                item.msg += "<br><br><blockquote><small><strong>" + bestReply.user_nickname + ":</strong><br>" + bestReply.msg + "</small></blockquote>";
                             }
                         }
                         return true;
