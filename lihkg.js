@@ -33,9 +33,83 @@ if (res) {
     if (res.item_data) {
         if (Array.isArray(res.item_data)) {
             if (isThreadPage) {
-                var firstPostId = res.first_post_id;
+                var threadOwnerId = res.user ? res.user.user_id : -1;
+                var contentPostIds = []; 
+                var replyMap = {}; 
+
+                if (res.page === "1" || res.page === 1) {
+                    for (var i = 0; i < res.item_data.length; i++) {
+                        var item = res.item_data[i];
+                        if (item.user.user_id === threadOwnerId) {
+                            contentPostIds.push(item.post_id);
+                        } else {
+                            break; 
+                        }
+                    }
+                }
+
+                for (var i = 0; i < res.item_data.length; i++) {
+                    var item = res.item_data[i];
+                    if (item.quote_post_id) {
+                        if (!replyMap[item.quote_post_id]) {
+                            replyMap[item.quote_post_id] = [];
+                        }
+                        replyMap[item.quote_post_id].push(item);
+                    }
+                }
+
                 res.item_data = res.item_data.filter(function(item) {
-                    return !item.quote_post_id || item.quote_post_id === firstPostId;
+                    var isLevel1 = !item.quote_post_id;
+                    var isStoryReply = contentPostIds.indexOf(item.quote_post_id) !== -1;
+                    
+                    if (isLevel1 || isStoryReply) {
+                        var replies = replyMap[item.post_id];
+                        if (replies && replies.length > 0) {
+                            replies.sort(function(a, b) {
+                                var rateA = 0, rateB = 0;
+                                var totalA = a.like_count + a.dislike_count;
+                                var totalB = b.like_count + b.dislike_count;
+                                
+                                if (totalA > 0) rateA = Math.abs(a.like_count - a.dislike_count) / totalA;
+                                if (totalB > 0) rateB = Math.abs(b.like_count - b.dislike_count) / totalB;
+                                
+                                return rateB - rateA; 
+                            });
+
+                            var bestReply = null;
+                            var candidate1 = replies[0];
+                            var total1 = candidate1.like_count + candidate1.dislike_count;
+                            
+                            if (total1 > 4) {
+                                bestReply = candidate1;
+                            } else if (replies.length > 1) {
+                                var candidate2 = replies[1];
+                                var total2 = candidate2.like_count + candidate2.dislike_count;
+                                if (total2 > 4) {
+                                    bestReply = candidate2;
+                                }
+                            }
+
+                            if (!bestReply) {
+                                var maxTotal = -1;
+                                for (var k = 0; k < replies.length; k++) {
+                                    var r = replies[k];
+                                    var t = r.like_count + r.dislike_count;
+                                    if (t > maxTotal) {
+                                        maxTotal = t;
+                                        bestReply = r;
+                                    }
+                                }
+                            }
+
+                            if (bestReply) {
+                                // 去掉了投票数显示，只保留名字和内容
+                                item.msg += "<br><br><blockquote><strong>" + bestReply.user_nickname + ":</strong><br>" + bestReply.msg + "</blockquote>";
+                            }
+                        }
+                        return true;
+                    }
+                    return false;
                 });
             }
 
