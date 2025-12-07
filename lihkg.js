@@ -2,8 +2,6 @@ var body = JSON.parse($response.body);
 var res = body.response;
 var isThreadPage = $request.url.indexOf("/page/") !== -1 && $request.url.indexOf("quotes") === -1;
 
-var newsRegex = /[：｜「」]/;
-
 if (res) {
     if (res.me) {
         res.me.is_plus_user = true;
@@ -20,7 +18,7 @@ if (res) {
                     rate = Math.floor(Math.abs(item.like_count - item.dislike_count) / total * 100);
                     var prefix = "";
                     if (item.is_hot) { prefix = "🔥 "; }
-                    if (newsRegex.test(item.title)) { prefix = "🆕 "; }
+                    if (/[：｜「」]/.test(item.title)) { prefix = "🆕 "; }
                     if (item.total_page > 3) { prefix = "⚔️ "; }
                     if (item.no_of_reply > 15 && rate < 30) { prefix = "⚔️ "; }
                     if (prefix !== "" && item.title && item.title.indexOf(prefix) !== 0) {
@@ -66,35 +64,38 @@ if (res) {
                     var isContentPost = !!contentPostIds[item.post_id];
 
                     if (isLevel1 || isStoryReply) {
-                        // 1. 帖子正文内容不显示回复
                         if (isContentPost) {
                             return true;
                         }
 
                         var replies = replyMap[item.post_id];
                         if (replies && replies.length > 0) {
-                            
-                            // 2. 统一排序逻辑（无论一条还是多条，都走这套严格流程）
-                            // 使用 parseInt 强制转数字，防止数据格式问题导致不显示
-                            replies.sort(function(a, b) {
-                                var likeA = parseInt(a.like_count) || 0;
-                                var disA = parseInt(a.dislike_count) || 0;
-                                var likeB = parseInt(b.like_count) || 0;
-                                var disB = parseInt(b.dislike_count) || 0;
+                            var bestReply = null;
 
-                                var scoreA = Math.abs(likeA - disA);
-                                var scoreB = Math.abs(likeB - disB);
+                            // 逻辑彻底拆分
+                            if (replies.length === 1) {
+                                // 情况1：只有一条，无条件显示
+                                bestReply = replies[0];
+                            } else {
+                                // 情况2：多条，严格排序
+                                replies.sort(function(a, b) {
+                                    var likeA = parseInt(a.like_count) || 0;
+                                    var disA = parseInt(a.dislike_count) || 0;
+                                    var likeB = parseInt(b.like_count) || 0;
+                                    var disB = parseInt(b.dislike_count) || 0;
 
-                                // 优先选绝对值大的（热度高）
-                                if (scoreA !== scoreB) {
-                                    return scoreB - scoreA; 
-                                }
-                                // 绝对值一样，选赞+踩总数多的
-                                return (likeB + disB) - (likeA + disA);
-                            });
+                                    var absA = Math.abs(likeA - disA);
+                                    var absB = Math.abs(likeB - disB);
 
-                            // 取第一名
-                            var bestReply = replies[0];
+                                    // 绝对值大的排前面 (解决 0-26 没显示的问题)
+                                    if (absA !== absB) {
+                                        return absB - absA;
+                                    }
+                                    // 绝对值一样，总互动数多的排前面
+                                    return (likeB + disB) - (likeA + disA);
+                                });
+                                bestReply = replies[0];
+                            }
 
                             if (bestReply) {
                                 item.msg += "<br><br><blockquote><strong><span class=\"small\">" + bestReply.user_nickname + "</span>:</strong><br>" + bestReply.msg + "</blockquote>";
