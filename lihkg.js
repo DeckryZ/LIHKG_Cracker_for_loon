@@ -64,7 +64,15 @@ if (res) {
                     var isLevel1 = !item.quote_post_id;
                     var isStoryReply = !!contentPostIds[item.quote_post_id];
                     
+                    // 判断当前楼层本身是否是“帖子正文” (Story Post)
+                    var isContentPost = !!contentPostIds[item.post_id];
+
                     if (isLevel1 || isStoryReply) {
+                        // 修正1：如果是帖子正文内容，直接显示，不拼接任何回复
+                        if (isContentPost) {
+                            return true;
+                        }
+
                         var replies = replyMap[item.post_id];
                         if (replies && replies.length > 0) {
                             var bestReply = null;
@@ -72,13 +80,21 @@ if (res) {
                             if (replies.length === 1) {
                                 bestReply = replies[0];
                             } else {
+                                // 修正2：强化数值类型转换，确保绝对值排序正确
                                 replies.sort(function(a, b) {
-                                    var scoreA = Math.abs(a.like_count - a.dislike_count);
-                                    var scoreB = Math.abs(b.like_count - b.dislike_count);
+                                    var likeA = parseInt(a.like_count) || 0;
+                                    var disA = parseInt(a.dislike_count) || 0;
+                                    var likeB = parseInt(b.like_count) || 0;
+                                    var disB = parseInt(b.dislike_count) || 0;
+
+                                    var scoreA = Math.abs(likeA - disA);
+                                    var scoreB = Math.abs(likeB - disB);
+
                                     if (scoreA !== scoreB) {
-                                        return scoreB - scoreA;
+                                        return scoreB - scoreA; // 绝对值大的排前面
                                     }
-                                    return (b.like_count + b.dislike_count) - (a.like_count + a.dislike_count);
+                                    // 如果绝对值一样，总票数多的排前面
+                                    return (likeB + disB) - (likeA + disA);
                                 });
                                 bestReply = replies[0];
                             }
