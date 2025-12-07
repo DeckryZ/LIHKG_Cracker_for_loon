@@ -48,7 +48,6 @@ if (res) {
                     }
                 }
 
-                // 构建回复关系图
                 for (var i = 0; i < res.item_data.length; i++) {
                     var item = res.item_data[i];
                     if (item.quote_post_id) {
@@ -66,8 +65,6 @@ if (res) {
                     if (isLevel1 || isStoryReply) {
                         var replies = replyMap[item.post_id];
                         if (replies && replies.length > 0) {
-                            // 核心修改：改为按“净胜票数 (赞-踩)”排序
-                            // 这样 27赞1踩(26分) 会远高于 1赞0踩(1分)
                             replies.sort(function(a, b) {
                                 var scoreA = a.like_count - a.dislike_count;
                                 var scoreB = b.like_count - b.dislike_count;
@@ -75,14 +72,7 @@ if (res) {
                             });
 
                             var bestReply = replies[0];
-                            
-                            // 即使按净分排序，为了防止只有1个赞的垃圾回复霸屏
-                            // 我们依然保留一个基础门槛：总票数最好大于4
-                            // 但如果所有回复票数都很低，那就还是显示第一名（Fallback）
-                            var total = bestReply.like_count + bestReply.dislike_count;
-                            
-                            // 只要有回复，且第一名不是那种被疯狂踩烂的（净分>0），就展示
-                            // 或者它虽然有踩，但是是唯一的高票回复，也展示
+
                             if (bestReply) {
                                 item.msg += "<br><br><blockquote><small><strong>" + bestReply.user_nickname + ":</strong><br>" + bestReply.msg + "</small></blockquote>";
                             }
