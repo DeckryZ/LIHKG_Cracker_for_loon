@@ -2,6 +2,9 @@ var body = JSON.parse($response.body);
 var res = body.response;
 var isThreadPage = $request.url.indexOf("/page/") !== -1 && $request.url.indexOf("quotes") === -1;
 
+
+var newsRegex = /[：｜「」]/;
+
 if (res) {
     if (res.me) {
         res.me.is_plus_user = true;
@@ -18,7 +21,8 @@ if (res) {
                     rate = Math.floor(Math.abs(item.like_count - item.dislike_count) / total * 100);
                     var prefix = "";
                     if (item.is_hot) { prefix = "🔥 "; }
-                    if (/[：｜「」]/.test(item.title)) { prefix = "🆕 "; }
+                    // 使用提取出的正则对象
+                    if (newsRegex.test(item.title)) { prefix = "🆕 "; }
                     if (item.total_page > 3) { prefix = "⚔️ "; }
                     if (item.no_of_reply > 15 && rate < 30) { prefix = "⚔️ "; }
                     if (prefix !== "" && item.title && item.title.indexOf(prefix) !== 0) {
@@ -65,45 +69,18 @@ if (res) {
                     if (isLevel1 || isStoryReply) {
                         var replies = replyMap[item.post_id];
                         if (replies && replies.length > 0) {
+                            
+                            // --- 修改开始：改为绝对值排序 ---
                             replies.sort(function(a, b) {
-                                var rateA = 0, rateB = 0;
-                                var totalA = a.like_count + a.dislike_count;
-                                var totalB = b.like_count + b.dislike_count;
-                                
-                                if (totalA > 0) rateA = Math.abs(a.like_count - a.dislike_count) / totalA;
-                                if (totalB > 0) rateB = Math.abs(b.like_count - b.dislike_count) / totalB;
-                                
-                                return rateB - rateA; 
+                                var scoreA = Math.abs(a.like_count - a.dislike_count);
+                                var scoreB = Math.abs(b.like_count - b.dislike_count);
+                                return scoreB - scoreA; 
                             });
 
-                            var bestReply = null;
-                            var candidate1 = replies[0];
-                            var total1 = candidate1.like_count + candidate1.dislike_count;
-                            
-                            if (total1 > 4) {
-                                bestReply = candidate1;
-                            } else if (replies.length > 1) {
-                                var candidate2 = replies[1];
-                                var total2 = candidate2.like_count + candidate2.dislike_count;
-                                if (total2 > 4) {
-                                    bestReply = candidate2;
-                                }
-                            }
-
-                            if (!bestReply) {
-                                var maxTotal = -1;
-                                for (var k = 0; k < replies.length; k++) {
-                                    var r = replies[k];
-                                    var t = r.like_count + r.dislike_count;
-                                    if (t > maxTotal) {
-                                        maxTotal = t;
-                                        bestReply = r;
-                                    }
-                                }
-                            }
+                            var bestReply = replies[0];
+                            // --- 修改结束 ---
 
                             if (bestReply) {
-                                // 去掉了投票数显示，只保留名字和内容
                                 item.msg += "<br><br><blockquote><strong><span class=\"small\">" + bestReply.user_nickname + "</span>:</strong><br>" + bestReply.msg + "</blockquote>";
                             }
                         }
