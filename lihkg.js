@@ -2,7 +2,7 @@ var body = JSON.parse($response.body);
 var res = body.response;
 var isThreadPage = $request.url.indexOf("/page/") !== -1 && $request.url.indexOf("quotes") === -1;
 
-
+// 优化1：正则表达式提取到循环外
 var newsRegex = /[：｜「」]/;
 
 if (res) {
@@ -21,7 +21,6 @@ if (res) {
                     rate = Math.floor(Math.abs(item.like_count - item.dislike_count) / total * 100);
                     var prefix = "";
                     if (item.is_hot) { prefix = "🔥 "; }
-                    // 使用提取出的正则对象
                     if (newsRegex.test(item.title)) { prefix = "🆕 "; }
                     if (item.total_page > 3) { prefix = "⚔️ "; }
                     if (item.no_of_reply > 15 && rate < 30) { prefix = "⚔️ "; }
@@ -38,20 +37,22 @@ if (res) {
         if (Array.isArray(res.item_data)) {
             if (isThreadPage) {
                 var threadOwnerId = res.user ? res.user.user_id : -1;
-                var contentPostIds = []; 
+                // 优化2：Hash Map 查询
+                var contentPostIds = {}; 
                 var replyMap = {}; 
 
                 if (res.page === "1" || res.page === 1) {
                     for (var i = 0; i < res.item_data.length; i++) {
                         var item = res.item_data[i];
                         if (item.user.user_id === threadOwnerId) {
-                            contentPostIds.push(item.post_id);
+                            contentPostIds[item.post_id] = true;
                         } else {
                             break; 
                         }
                     }
                 }
 
+                // 构建回复关系图
                 for (var i = 0; i < res.item_data.length; i++) {
                     var item = res.item_data[i];
                     if (item.quote_post_id) {
@@ -64,23 +65,38 @@ if (res) {
 
                 res.item_data = res.item_data.filter(function(item) {
                     var isLevel1 = !item.quote_post_id;
-                    var isStoryReply = contentPostIds.indexOf(item.quote_post_id) !== -1;
+                    var isStoryReply = !!contentPostIds[item.quote_post_id];
                     
                     if (isLevel1 || isStoryReply) {
                         var replies = replyMap[item.post_id];
                         if (replies && replies.length > 0) {
                             
-                            // --- 修改开始：改为绝对值排序 ---
+                            // BUG修复核心：严格排序
+                            // 1. 按绝对值（热度）从大到小排
+                            // 2. 如果热度相同，按赞数从大到小排（防止负分和0分乱序）
                             replies.sort(function(a, b) {
                                 var scoreA = Math.abs(a.like_count - a.dislike_count);
                                 var scoreB = Math.abs(b.like_count - b.dislike_count);
+                                if (scoreA === scoreB) {
+                                    return b.like_count - a.like_count;
+                                }
                                 return scoreB - scoreA; 
                             });
 
                             var bestReply = replies[0];
-                            // --- 修改结束 ---
+                            var totalVotes = bestReply.like_count + bestReply.dislike_count;
 
-                            if (bestReply) {
+                            // BUG修复核心2：单条回复的显示逻辑
+                            // 只有一条回复时，必须有票（赞或踩）才显示
+                            // 如果有多条回复，因为已经排序过，第一名肯定是最有资格的，直接显示
+                            var shouldShow = true;
+                            if (replies.length === 1) {
+                                if (totalVotes === 0) {
+                                    shouldShow = false;
+                                }
+                            }
+
+                            if (shouldShow && bestReply) {
                                 item.msg += "<br><br><blockquote><strong><span class=\"small\">" + bestReply.user_nickname + "</span>:</strong><br>" + bestReply.msg + "</blockquote>";
                             }
                         }
