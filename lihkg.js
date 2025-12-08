@@ -132,7 +132,7 @@ if (res) {
                                 }
 
                                 // 拼装 HTML：注意这里用了 class="small yellow" 这种写法
-                                item.msg += "<br><br><blockquote><strong><span class=\"small " + colorClass + "\">" + bestReply.user_nickname + "</span>:</strong><br>" + replyContent + "</blockquote>";
+                                item.msg += "<br><br><blockquote><span class=\"small " + colorClass + "\">" + bestReply.user_nickname + "</span>:<br>" + replyContent + "</blockquote>";
                             }
                         }
                         return true;
