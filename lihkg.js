@@ -1,7 +1,7 @@
 var body = JSON.parse($response.body);
 var res = body.response;
 
-// 判断页面类型
+// 判断页面类型hog
 var url = $request.url;
 // 主帖子页 (显示一级评论)
 var isThreadPage = url.indexOf("/page/") !== -1 && url.indexOf("quotes") === -1;
@@ -136,9 +136,10 @@ if (res) {
             });
         }
 
-        // 统一处理：显示投票数
+        // 统一处理：显示投票数 & 强制展开关键词折叠
         res.item_data.forEach(function(item) {
             item.display_vote = true;
+            item.is_minimized_keywords = false; // <--- 仅修改了这里
         });
     }
 
