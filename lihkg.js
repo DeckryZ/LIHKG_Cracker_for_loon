@@ -6,7 +6,7 @@
  */
 
 // === DeepSeek 配置 ===
-const DEEPSEEK_KEY = ""; // 你提供的 Key
+const DEEPSEEK_KEY = typeof $argument !== "undefined" ? $argument.trim() : "";
 const DEEPSEEK_API = "https://api.deepseek.com/chat/completions";
 const DEEPSEEK_MODEL = "deepseek-chat";
 
