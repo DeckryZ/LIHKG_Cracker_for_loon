@@ -78,13 +78,11 @@ if (res) {
                     var isContentPost = !!contentPostIds[currentIdStr];
 
                     if (isLevel1 || isStoryReply) {
-                        
                         if (isContentPost) {
                             return true;
                         }
 
                         var replies = replyMap[currentIdStr];
-                        
                         if (replies && replies.length > 0) {
                             var bestReply = null;
 
@@ -121,20 +119,20 @@ if (res) {
                                     replyContent = "<em>[图片/贴纸]</em>";
                                 }
                                 
-                                // === 颜色标记逻辑 ===
-                                var nameColor = "#000000"; // 默认黑色
+                                // === 颜色 Class 标记逻辑 ===
+                                var colorClass = "blue"; // 默认为男性蓝色
                                 var isOwner = (bestReply.user.user_id === threadOwnerId);
                                 
                                 if (isOwner) {
-                                    nameColor = "#E6C35C"; // 楼主金色 (连登经典金)
+                                    colorClass = "yellow"; // 楼主：金色
                                 } else if (bestReply.user.gender === "F") {
-                                    nameColor = "#FF69B4"; // 女性粉红
+                                    colorClass = "red";    // 女性：红色
                                 } else if (bestReply.user.gender === "M") {
-                                    nameColor = "#4682B4"; // 男性钢蓝
+                                    colorClass = "blue";   // 男性：蓝色
                                 }
 
-                                // 拼装 HTML
-                                item.msg += "<br><br><blockquote><strong><span class=\"small\" style=\"color:" + nameColor + "\">" + bestReply.user_nickname + "</span>:</strong><br>" + replyContent + "</blockquote>";
+                                // 拼装 HTML：注意这里用了 class="small yellow" 这种写法
+                                item.msg += "<br><br><blockquote><strong><span class=\"small " + colorClass + "\">" + bestReply.user_nickname + "</span>:</strong><br>" + replyContent + "</blockquote>";
                             }
                         }
                         return true;
