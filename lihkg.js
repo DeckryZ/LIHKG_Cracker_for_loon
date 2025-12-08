@@ -6,7 +6,7 @@
  */
 
 // === DeepSeek 配置 ===
-const DEEPSEEK_KEY = "sk-e3b96cdc4a6a446cb398cde58b5c6021"; // 你提供的 Key
+const DEEPSEEK_KEY = ""; // 你提供的 Key
 const DEEPSEEK_API = "https://api.deepseek.com/chat/completions";
 const DEEPSEEK_MODEL = "deepseek-chat";
 
