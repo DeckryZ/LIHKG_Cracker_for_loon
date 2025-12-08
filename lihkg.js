@@ -50,7 +50,6 @@ if (res) {
                     for (var i = 0; i < res.item_data.length; i++) {
                         var item = res.item_data[i];
                         if (item.user.user_id === threadOwnerId) {
-                            // 强制转字符串，防止类型不匹配
                             contentPostIds[String(item.post_id)] = true;
                         } else {
                             break; 
@@ -58,11 +57,10 @@ if (res) {
                     }
                 }
 
-                // 2. 建立回复索引 (Map构建)
+                // 2. 建立回复索引
                 for (var i = 0; i < res.item_data.length; i++) {
                     var item = res.item_data[i];
                     var qId = item.quote_post_id;
-                    // 确保 qId 存在且不为空
                     if (qId && qId !== "0" && qId !== "") {
                         var qIdStr = String(qId);
                         if (!replyMap[qIdStr]) {
@@ -79,15 +77,12 @@ if (res) {
                     var isStoryReply = !!contentPostIds[String(item.quote_post_id)];
                     var isContentPost = !!contentPostIds[currentIdStr];
 
-                    // 核心判断：只有 一级评论 OR 回复了楼主正文的评论 才保留
                     if (isLevel1 || isStoryReply) {
                         
-                        // 如果自己就是楼主写的长文，不挂载任何东西，直接返回
                         if (isContentPost) {
                             return true;
                         }
 
-                        // 查找有没有人回复当前这条评论
                         var replies = replyMap[currentIdStr];
                         
                         if (replies && replies.length > 0) {
@@ -97,7 +92,6 @@ if (res) {
                             if (replies.length === 1) {
                                 bestReply = replies[0];
                             } else {
-                                // 擂台赛算法 (O(N))
                                 bestReply = replies[0];
                                 var bestLike = +bestReply.like_count || 0;
                                 var bestDis = +bestReply.dislike_count || 0;
@@ -111,8 +105,6 @@ if (res) {
                                     var curAbs = Math.abs(l - d);
                                     var curTotal = l + d;
 
-                                    // 1. 绝对值更大胜出 (26 vs 0)
-                                    // 2. 绝对值一样，总票数多胜出 (5+5 vs 0+0)
                                     if (curAbs > maxAbs || (curAbs === maxAbs && curTotal > maxTotal)) {
                                         maxAbs = curAbs;
                                         maxTotal = curTotal;
@@ -124,18 +116,29 @@ if (res) {
                             }
 
                             if (bestReply) {
-                                // 修复：处理纯图片/表情包回复 (msg为空的情况)
                                 var replyContent = bestReply.msg;
                                 if (!replyContent || replyContent.trim() === "") {
                                     replyContent = "<em>[图片/贴纸]</em>";
                                 }
                                 
-                                item.msg += "<br><br><blockquote><strong><span class=\"small\">" + bestReply.user_nickname + "</span>:</strong><br>" + replyContent + "</blockquote>";
+                                // === 颜色标记逻辑 ===
+                                var nameColor = "#000000"; // 默认黑色
+                                var isOwner = (bestReply.user.user_id === threadOwnerId);
+                                
+                                if (isOwner) {
+                                    nameColor = "#E6C35C"; // 楼主金色 (连登经典金)
+                                } else if (bestReply.user.gender === "F") {
+                                    nameColor = "#FF69B4"; // 女性粉红
+                                } else if (bestReply.user.gender === "M") {
+                                    nameColor = "#4682B4"; // 男性钢蓝
+                                }
+
+                                // 拼装 HTML
+                                item.msg += "<br><br><blockquote><strong><span class=\"small\" style=\"color:" + nameColor + "\">" + bestReply.user_nickname + "</span>:</strong><br>" + replyContent + "</blockquote>";
                             }
                         }
                         return true;
                     }
-                    // 过滤掉普通的二级回复
                     return false;
                 });
             }
