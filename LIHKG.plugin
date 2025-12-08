@@ -1,15 +1,9 @@
-#!name = LIHKG 
-#!desc = LIHKG 增强插件：去广告、VIP 解锁、极速神评挂载、DeepSeek 粤语深度翻译。
-#!author = DeckryZ
+#!name = LIHKG Cracker
+#!desc = Unlocks LIHKG+ and removes ads. Includes a toggle to force reveal hidden vote counts.
 #!icon = https://raw.githubusercontent.com/DeckryZ/LIHKG_crack_for_loon/main/icon.png
-#!tag = 去广告,增强
 
-[Argument]
-# 这里的 {api_key} 变量会被传给脚本
-api_key = input,"",tag=DeepSeek API Key,desc=请输入以 sk- 开头的 DeepSeek 密钥 (留空则仅启用去广告和神评功能)
 
 [Rule]
-# 广告拦截规则
 DOMAIN-SUFFIX, adv.lihkg.com, REJECT
 DOMAIN-SUFFIX, adsappier.com, REJECT
 DOMAIN-SUFFIX, appiersig.com, REJECT
@@ -27,11 +21,8 @@ DOMAIN-SUFFIX, tpc.googlesyndication.com, REJECT
 DOMAIN-SUFFIX, adservice.google.com, REJECT
 DOMAIN-SUFFIX, g.doubleclick.net, REJECT
 
-
 [Script]
-# 核心脚本：argument="{api_key}" 将用户在 UI 填写的 Key 传给 js
-# script-path 请根据你的实际情况填写（本地文件名 或 GitHub 链接）
-http-response ^https?:\/\/(server\.|)lihkg\.com\/api_v2\/.* script-path=https://raw.githubusercontent.com/DeckryZ/lihkg_crack_for_loon/main/lihkg.js, requires-body=true, timeout=30, tag=LIHKG_Pro, argument="{api_key}"
+http-response ^https?:\/\/(server\.|)lihkg\.com\/api_v2\/.* script-path=https://raw.githubusercontent.com/DeckryZ/lihkg_crack_for_loon/main/lihkg.js, requires-body=true, tag=LIHKG_VIP
 
 [MitM]
 hostname = *.lihkg.com, lihkg.com
