@@ -27,10 +27,11 @@ DOMAIN-SUFFIX, tpc.googlesyndication.com, REJECT
 DOMAIN-SUFFIX, adservice.google.com, REJECT
 DOMAIN-SUFFIX, g.doubleclick.net, REJECT
 
+
 [Script]
 # 核心脚本：argument="{api_key}" 将用户在 UI 填写的 Key 传给 js
 # script-path 请根据你的实际情况填写（本地文件名 或 GitHub 链接）
-http-response ^https?:\/\/(server\.|)lihkg\.com\/api_v2\/.* script-path=lihkg.js, requires-body=true, timeout=30, tag=LIHKG_Pro, argument="{api_key}"
+http-response ^https?:\/\/(server\.|)lihkg\.com\/api_v2\/.* script-path=https://raw.githubusercontent.com/DeckryZ/lihkg_crack_for_loon/main/lihkg.js, requires-body=true, timeout=30, tag=LIHKG_Pro, argument="{api_key}"
 
 [MitM]
 hostname = *.lihkg.com, lihkg.com
