@@ -1,7 +1,11 @@
-#!name = LIHKG Cracker
-#!desc = Unlocks LIHKG+ and removes ads. Includes a toggle to force reveal hidden vote counts.
+#!name = LIHKG Cracker + AI
+#!desc = 解锁 LIHKG+、去广告、显示隐藏赞数，并支持 Gemini 标题翻译。
 #!icon = https://raw.githubusercontent.com/DeckryZ/LIHKG_crack_for_loon/main/icon.png
+#!author = DeckryZ
 
+[Argument]
+gemini_api_key = string, desc="Gemini API Key", placeholder="在此填入以开启翻译功能"
+target_lang = string, desc="翻译目标语言", defaultValue="zh-CN", placeholder="例如: zh-CN, en, ja"
 
 [Rule]
 DOMAIN-SUFFIX, adv.lihkg.com, REJECT
@@ -22,7 +26,8 @@ DOMAIN-SUFFIX, adservice.google.com, REJECT
 DOMAIN-SUFFIX, g.doubleclick.net, REJECT
 
 [Script]
-http-response ^https?:\/\/(server\.|)lihkg\.com\/api_v2\/.* script-path=https://raw.githubusercontent.com/DeckryZ/lihkg_crack_for_loon/main/lihkg.js, requires-body=true, tag=LIHKG_VIP
+# 注意：Loon 会自动将 [Argument] 中的内容注入到脚本的 $argument 变量中
+http-response ^https?:\/\/(server\.|)lihkg\.com\/api_v2\/.* script-path=https://raw.githubusercontent.com/DeckryZ/lihkg_crack_for_loon/main/lihkg.js, requires-body=true, timeout=30, tag=LIHKG_VIP
 
 [MitM]
 hostname = *.lihkg.com, lihkg.com
