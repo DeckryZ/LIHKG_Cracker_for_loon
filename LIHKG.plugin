@@ -1,14 +1,15 @@
-#!name = LIHKG Cracker + AI
-#!desc = 解锁 LIHKG+、去广告、显示隐藏赞数，并支持 Gemini 标题翻译。
-#!icon = https://raw.githubusercontent.com/DeckryZ/LIHKG_crack_for_loon/main/icon.png
+#!name = LIHKG Pro (Gemini)
+#!desc = LIHKG 增强插件：去广告、VIP 解锁、极速神评挂载、Gemini 粤语深度翻译。
 #!author = DeckryZ
+#!icon = https://raw.githubusercontent.com/DeckryZ/LIHKG_crack_for_loon/main/icon.png
+#!tag = 去广告,增强
 
 [Argument]
-# 这里定义的字段会在 Loon 插件详情页显示为输入框
-gemini_api_key = input, "", tag=Gemini API Key, desc=在此填入 Google AI Studio 获取的 API Key
-target_lang = select, "zh-CN", "en", "ja", "zh-TW", tag=翻译目标语言, desc=选择标题翻译的目标语言
+# 这里的 {api_key} 变量会被传给脚本
+api_key = input,"",tag=Gemini API Key,desc=请输入 Google Gemini API Key (留空则仅启用去广告和神评功能)
 
 [Rule]
+# 广告拦截规则 (保持不变)
 DOMAIN-SUFFIX, adv.lihkg.com, REJECT
 DOMAIN-SUFFIX, adsappier.com, REJECT
 DOMAIN-SUFFIX, appiersig.com, REJECT
@@ -27,9 +28,8 @@ DOMAIN-SUFFIX, adservice.google.com, REJECT
 DOMAIN-SUFFIX, g.doubleclick.net, REJECT
 
 [Script]
-# 核心修改：argument 字段显式调用了上面定义的 {变量}
-# 这样用户填写的 API Key 就会以 "gemini_api_key=xxx&target_lang=zh-CN" 的格式传给 JS
-http-response ^https?:\/\/(server\.|)lihkg\.com\/api_v2\/.* script-path=https://raw.githubusercontent.com/DeckryZ/lihkg_crack_for_loon/main/lihkg.js, requires-body=true, timeout=30, tag=LIHKG_VIP, argument=gemini_api_key={gemini_api_key}&target_lang={target_lang}
+# 核心脚本：argument="{api_key}" 将用户在 UI 填写的 Key 传给 js
+http-response ^https?:\/\/(server\.|)lihkg\.com\/api_v2\/.* script-path=lihkg.js, requires-body=true, timeout=30, tag=LIHKG_Pro, argument="{api_key}"
 
 [MitM]
 hostname = *.lihkg.com, lihkg.com
